@@ -1,0 +1,6 @@
+services:
+  ventasproduccion:
+    image: ventasproduccion
+    build:
+      context: .
+      dockerfile: ./Dockerfile
