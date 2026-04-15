@@ -31,7 +31,7 @@
                     @foreach($cobros as $cobro)                    
                         <tr>
                         <td class="border px-2 py-1">{{ $cobro->venta->cliente->nombre ?? 'Ocasional' }}</td>
-                        <td class="border px-2 py-1">${{ number_format($cobro->monto_pagado) }}</td>
+                        <td class="border px-2 py-1">${{ number_format($cobro->venta->total, 0) }}</td>
                         <td class="border px-2 py-1">{{ $cobro->created_at->format('d/m/Y H:i') }}</td>
                     </tr>
                     @endforeach
