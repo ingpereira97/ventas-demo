@@ -25,6 +25,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Codigo de Barras</th>                            
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Precio</th>
@@ -36,6 +37,7 @@
                         @forelse ($productos as $producto)
                             <tr>
                                 <td>{{ $producto->id }}</td>
+                                <td>{{ $producto->codigo_barras }}</td>
                                 <td>{{ $producto->nombre }}</td>
                                 <td>{{ $producto->descripcion }}</td>
                                 <td>{{ number_format($producto->precio, 0) }}</td>

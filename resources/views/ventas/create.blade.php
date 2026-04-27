@@ -49,6 +49,19 @@
                             </option>
                         @endforeach
                     </select>
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Escanear Producto</label>
+                            <input type="text" id="codigo_barras" class="form-control" placeholder="Escanear código...">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Cantidad</label>
+                            <input type="number" id="cantidad_scan" class="form-control" value="1" min="1" step="any">
+                        </div>
+
+                    </div>
                 </div>
 
                 {{-- 📦 TABLA --}}
@@ -99,6 +112,12 @@
 
 @push('scripts')
 <script>
+let productosDB = @json($productos);
+console.log(productosDB);
+</script>
+
+<script>
+
 let productos = [];
 
 $('#producto_select').change(function () {
@@ -327,5 +346,89 @@ function eliminarProducto(index) {
 
         document.querySelector('button[type="submit"]').disabled = !valido;
     });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+    const input = document.getElementById('codigo_barras');
+
+    if (!input) return;
+
+    input.focus();
+
+    input.addEventListener('keydown', function(e) {
+
+        if (e.key === 'Enter') {
+
+            e.preventDefault();
+
+            let codigo = this.value.trim();
+
+            let cantidadInput = document.getElementById('cantidad_scan').value;
+
+            let producto = productosDB.find(p => 
+                String(p.codigo_barras).trim() === String(codigo).trim()
+            );
+
+            if (!producto) {
+                alert("Producto no encontrado");
+                this.value = '';
+                return;
+            }
+
+            // 🔥 CANTIDAD SEGÚN TIPO
+            let cantidad;
+
+            if (producto.tipo === 'peso') {
+                cantidad = parseFloat(cantidadInput) || 0.01;
+            } else {
+                cantidad = parseInt(cantidadInput) || 1;
+            }
+
+            if (cantidad <= 0) {
+                alert("Cantidad inválida");
+                return;
+            }
+
+            let existente = productos.find(p => p.id == producto.id);
+
+            // 🔥 SI YA EXISTE → SUMA
+            if (existente) {
+
+                if (existente.cantidad + cantidad > producto.stock) {
+                    alert("Stock insuficiente");
+                    this.value = '';
+                    return;
+                }
+
+                existente.cantidad += cantidad;
+
+            } else {
+
+                if (cantidad > producto.stock) {
+                    alert("Stock insuficiente");
+                    this.value = '';
+                    return;
+                }
+
+                productos.push({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: parseFloat(producto.precio),
+                    cantidad: cantidad,
+                    tipo: producto.tipo,
+                    stock: parseFloat(producto.stock)
+                });
+            }
+
+            renderTabla();
+
+            // 🔄 RESET
+            this.value = '';
+            document.getElementById('cantidad_scan').value = 1;
+            this.focus();
+        }
+    });
+});
 </script>
 @endpush

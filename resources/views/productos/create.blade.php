@@ -12,7 +12,10 @@
         <form method="POST" action="{{ route('productos.store') }}">
             @csrf
             <div class="card-body">
-
+                <div class="form-group">
+                    <label for="nombre">Codigo de Barras</label>
+                    <input type="text" id="codigo_barras" class="form-control" name="codigo_barras" placeholder="Escanear producto...">
+                </div>
                 <div class="form-group">
                     <label for="nombre">Nombre</label>
                     <input type="text" class="form-control" name="nombre" required>

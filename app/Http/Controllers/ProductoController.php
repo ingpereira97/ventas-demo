@@ -43,6 +43,7 @@ class ProductoController extends Controller
      */
     public function store(Request $request){
     $request->validate([
+        'codigo_barras' => 'nullable|string|max:255',
         'nombre' => 'required|string|max:255',
         'descripcion' => 'nullable|string',
         'precio' => 'required|numeric',
@@ -51,6 +52,7 @@ class ProductoController extends Controller
     ]);
 
     Producto::create([
+        'codigo_barras' => $request->codigo_barras,
         'nombre' => $request->nombre,
         'descripcion' => $request->descripcion,
         'precio' => $request->precio,
@@ -100,6 +102,7 @@ class ProductoController extends Controller
     public function update(Request $request, Producto $producto)
     {
         $request->validate([
+            'codigo_barras' => 'required|string',
             'nombre' => 'required|string',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric',
@@ -107,7 +110,7 @@ class ProductoController extends Controller
             'tipo' => 'required|in:unidad,peso',
         ]);
     
-        $producto->update($request->only('nombre', 'descripcion', 'precio', 'stock', 'tipo'));
+        $producto->update($request->only('codigo_barras','nombre', 'descripcion', 'precio', 'stock', 'tipo'));
     
         return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente.');
     }

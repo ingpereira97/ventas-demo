@@ -10,6 +10,7 @@ class Producto extends Model
     use HasFactory;
     // Permitir asignación masiva en estos campos
     protected $fillable = [
+        'codigo_barras',
         'nombre',
         'descripcion',
         'precio',
