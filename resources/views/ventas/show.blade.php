@@ -12,10 +12,9 @@
                     <!-- Contenedor del ticket para POS 58mm -->
                     <div class="ticket" style="font-family: 'Courier New', monospace; width: 260mm; margin: auto; padding: 5px; border: 1px solid #ddd;">
 
-                        <h3 style="text-align:center; font-size:75px; font-weight:bold;">Recibo de Venta</h3>
                         <div style="text-align:center; margin-bottom:10px;">
                             <img src="{{ asset('img/AleyH.png') }}" 
-                                style="max-width:250px;">
+                                style="max-width:300px; padding:7px;">
                         </div>
                         <h3 style="text-align:center; font-size:30px; font-weight:bold;">Pa'i Perez casi Tte. Gutierrez - Itauguá - Paraguay</h3>
                         <h3 style="text-align:center; font-size:30px; font-weight:bold;">Cel.: (0983) 460 212</h3>
@@ -40,16 +39,22 @@
                                 <tr style="font-weight:bold;">
                                     <td>{{ $producto->nombre }}</td>
                                     <td style="text-align:center;">
+                                        @php
+                                            $cantidad = $producto->pivot->cantidad;
+                                        @endphp
+
                                         @if($producto->tipo == 'peso')
 
-                                            @if($producto->pivot->cantidad < 1)
-                                                {{ $producto->pivot->cantidad * 1000 }} g
+                                            @if($cantidad < 1)
+                                                {{ number_format($cantidad * 1000, 0, ',', '.') }} g
                                             @else
-                                                {{ number_format($producto->pivot->cantidad) }} Kg
+                                                {{ round($cantidad, 3) == round($cantidad) 
+                                                    ? number_format($cantidad, 0, ',', '.') 
+                                                    : number_format($cantidad, 3, ',', '.') }} Kg
                                             @endif
 
                                         @else
-                                            {{ $producto->pivot->cantidad }}
+                                            {{ number_format($cantidad, 0, ',', '.') }}
                                         @endif
                                     </td>
                                     <td style="text-align:center;">

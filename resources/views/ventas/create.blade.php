@@ -86,6 +86,13 @@
                     <label class="form-label fw-bold">Total</label>
                     <input type="text" name="total" id="total" class="form-control" readonly value="0">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tipo de Venta</label>
+                    <select name="tipo_pago" class="form-control" required>
+                        <option value="contado">Contado</option>
+                        <option value="credito">Crédito</option>
+                    </select>
+                </div>
 
                 <button type="submit" id="btn-guardar" class="btn btn-primary">Guardar Venta</button>
             </div>

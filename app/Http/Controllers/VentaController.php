@@ -118,9 +118,13 @@ public function store(Request $request)
 
         DB::commit();
 
-        return redirect()->route('ventas.index')
-            ->with('success', 'Venta registrada exitosamente.');
+        if ($request->tipo_pago === 'contado') {
+            return redirect()->route('cobros.create', $venta->id);
+        }
 
+            return redirect()->route('ventas.index')
+                ->with('success', 'Venta registrada exitosamente.');
+                
     } catch (\Exception $e) {
 
         DB::rollBack();

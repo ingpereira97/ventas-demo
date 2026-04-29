@@ -71,7 +71,7 @@ class CobroController extends Controller
 
         // 🔁 redirect
         return redirect()
-            ->route('ventas.index')
+            ->route('ventas.show', $venta->id)
             ->with([
                 'success' => 'Pago registrado correctamente.',
                 'vuelto' => $vuelto
