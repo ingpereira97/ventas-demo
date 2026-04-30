@@ -49,8 +49,8 @@
                                                 {{ number_format($cantidad * 1000, 0, ',', '.') }} g
                                             @else
                                                 {{ round($cantidad, 3) == round($cantidad) 
-                                                    ? number_format($cantidad, 0, ',', '.') 
-                                                    : number_format($cantidad, 3, ',', '.') }} Kg
+                                                    ? number_format($cantidad, 0, '.', ',') 
+                                                    : number_format($cantidad, 3, '.', ',') }} Kg
                                             @endif
 
                                         @else

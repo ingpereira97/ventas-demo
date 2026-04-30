@@ -200,5 +200,22 @@ public function store(Request $request)
             return back()->with('error', $e->getMessage());
         }
     }
+    public function buscarProductos(Request $request)
+    {
+        $buscar = $request->q;
 
+        // 🔥 PRIMERO: buscar coincidencia EXACTA en código de barras
+        $productoExacto = Producto::where('codigo_barras', $buscar)->first();
+
+        if ($productoExacto) {
+            return response()->json([$productoExacto]);
+        }
+
+        // 🔍 SI NO ES CÓDIGO → buscar por nombre
+        $productos = Producto::where('nombre', 'like', "%$buscar%")
+            ->limit(10)
+            ->get();
+
+        return response()->json($productos);
+    }
 }

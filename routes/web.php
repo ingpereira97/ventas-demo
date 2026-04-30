@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/informes/productos', [InformeController::class, 'productos'])->name('informes.productos');
     Route::get('/informes/caja', [InformeController::class, 'caja'])->name('informes.caja');
     Route::get('/informes/clientes', [InformeController::class, 'clientes'])->name('informes.clientes');
+    Route::get('/buscar-productos', [VentaController::class, 'buscarProductos'])->name('productos.buscar');
 });
 
 Route::middleware(['auth'])->group(function () {

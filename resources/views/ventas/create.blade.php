@@ -31,37 +31,20 @@
 
                 <!-- Productos -->
                 {{-- 🔍 BUSCADOR DE PRODUCTO --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Agregar Producto</label>
-
-                    <select id="producto_select" class="form-select">
-                        <option value="">Buscar producto...</option>
-
-                        @foreach($productos as $producto)
-                            <option value="{{ $producto->id }}"
-                                data-precio="{{ $producto->precio }}"
-                                data-tipo="{{ $producto->tipo }}"
-                                data-stock="{{ $producto->stock }}"
-                                {{ $producto->stock <= 0 ? 'disabled' : '' }}>
-
-                                {{ $producto->nombre }} 
-                                ({{ $producto->tipo == 'peso' ? 'Kg' : 'Und' }})
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="row mb-3">
-
+                <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Escanear Producto</label>
-                            <input type="text" id="codigo_barras" class="form-control" placeholder="Escanear código...">
+                            <label class="form-label fw-bold">Buscar Producto</label>
+                            <input type="text" id="buscar_producto" class="form-control" placeholder="Escribí nombre o código...">
+
+                            <div id="resultados" class="list-group mt-2"></div>
+                
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Cantidad</label>
-                            <input type="number" id="cantidad_scan" class="form-control" value="1" min="1" step="any">
+                            <input type="number" id="cantidad_scan" class="form-control" value="1" min="0.001" step="0.001">
                         </div>
 
-                    </div>
                 </div>
 
                 {{-- 📦 TABLA --}}
@@ -120,52 +103,171 @@
 @push('scripts')
 <script>
 let productosDB = @json($productos);
-console.log(productosDB);
 </script>
-
 <script>
+let ignorarBusqueda = false;
 
 let productos = [];
+let indexSeleccionado = -1;
+let resultadosActuales = [];
+let ultimoQuery = '';
+let timeout = null;
 
-$('#producto_select').change(function () {
+document.getElementById('buscar_producto').addEventListener('input', function() {
 
-    let option = $(this).find('option:selected');
+    if (ignorarBusqueda) {
+        ignorarBusqueda = false;
+        return;
+    }
+    let query = this.value.trim();
+    ultimoQuery = query;
 
-    let id = option.val();
-    if (!id) return;
-
-    let nombre = option.text();
-    let precio = parseFloat(option.data('precio'));
-    let tipo = option.data('tipo');
-    let stock = parseFloat(option.data('stock'));
-
-    // evitar duplicados
-    if (productos.find(p => p.id == id)) {
-        alert("Este producto ya fue agregado.");
+    // ❌ IGNORAR CÓDIGO DE BARRAS
+    if (/^\d{8,}$/.test(query)) {
         return;
     }
 
-    let cantidad = tipo === 'peso' ? 0.01 : 1;
+    if (query.length < 2) {
+        document.getElementById('resultados').innerHTML = '';
+        resultadosActuales = [];
+        return;
+    }
 
-    productos.push({
-        id,
-        nombre,
-        precio,
-        cantidad,
-        tipo,
-        stock
-    });
+    fetch(`/buscar-productos?q=${query}`)
+        .then(res => res.json())
+        .then(data => {
 
-    renderTabla();
+            // 🔥 SI YA CAMBIÓ EL INPUT → IGNORAR RESPUESTA
+            if (query !== ultimoQuery || ignorarBusqueda) return;
+            resultadosActuales = data;
+            indexSeleccionado = data.length > 0 ? 0 : -1;
+
+            let html = '';
+
+            data.forEach((p, index) => {
+                html += `
+                    <a href="#" 
+                       class="list-group-item list-group-item-action resultado-item"
+                       data-index="${index}">
+                        ${p.nombre} - Gs ${parseInt(p.precio).toLocaleString()}
+                    </a>
+                `;
+            });
+
+            document.getElementById('resultados').innerHTML = html;
+
+            setTimeout(() => {
+                let items = document.querySelectorAll('.resultado-item');
+                actualizarSeleccion(items);
+            }, 50);
+        });
 });
+document.getElementById('buscar_producto').addEventListener('keydown', function(e) {
+     let items = document.querySelectorAll('.resultado-item');
+
+     // 🔽 BAJAR
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+
+        indexSeleccionado++;
+
+        if (indexSeleccionado >= items.length) indexSeleccionado = 0;
+
+        actualizarSeleccion(items);
+        return;
+    }
+
+    // 🔼 SUBIR
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+
+        indexSeleccionado--;
+
+        if (indexSeleccionado < 0) indexSeleccionado = items.length - 1;
+
+        actualizarSeleccion(items);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+
+        e.preventDefault();
+
+        let codigo = this.value.trim();
+
+        // 📦 SCANNER (INSTANTÁNEO)
+        if (/^[a-zA-Z0-9]{6,}$/.test(codigo)) {
+
+
+            ignorarBusqueda = true;
+            ultimoQuery = ''; // 🔥 MATA cualquier búsqueda pendiente
+
+            let producto = productosDB.find(p => 
+                String(p.codigo_barras) === String(codigo)
+            );
+
+            if (producto) {
+                agregarProductoDesdeBusqueda(producto);
+            } else {
+                alert("Producto no encontrado");
+            }
+
+            limpiarBuscador();
+            return;
+        }
+
+        // 🔍 BUSCADOR NORMAL
+        if (indexSeleccionado >= 0 && resultadosActuales[indexSeleccionado]) {
+            agregarProductoDesdeBusqueda(resultadosActuales[indexSeleccionado]);
+            limpiarBuscador();
+        }
+    }
+});
+function limpiarBuscador() {
+    document.getElementById('buscar_producto').value = '';
+    document.getElementById('resultados').innerHTML = '';
+    indexSeleccionado = -1;
+}
+
+// 🔥 CLICK TAMBIÉN FUNCIONA
+document.addEventListener('click', function(e) {
+
+    if (e.target.classList.contains('resultado-item')) {
+
+        let item = e.target.closest('.resultado-item');
+        if (!item) return;
+
+        let index = item.getAttribute('data-index');
+        agregarProductoDesdeBusqueda(resultadosActuales[index]);
+    }
+
+    // cerrar lista si haces click afuera
+    if (!e.target.closest('#buscar_producto') && !e.target.closest('#resultados')) {
+        document.getElementById('resultados').innerHTML = '';
+    }
+});
+
+
+// 🔥 RESALTAR SELECCIÓN
+function actualizarSeleccion(items) {
+
+    items.forEach(item => item.classList.remove('active'));
+
+    if (items[indexSeleccionado]) {
+    items[indexSeleccionado].classList.add('active');
+    items[indexSeleccionado].scrollIntoView({
+        block: 'nearest'
+    });
+}
+}
 
 function renderTabla() {
 
-    let tbody = $('#tabla-productos tbody');
-    let inputs = $('#inputs-hidden');
+    let tbody = document.querySelector('#tabla-productos tbody');
+    let inputs = document.getElementById('inputs-hidden');
 
-    tbody.empty();
-    inputs.empty();
+    tbody.innerHTML = '';
+    inputs.innerHTML = '';
 
     let total = 0;
     let hayError = false;
@@ -174,102 +276,132 @@ function renderTabla() {
 
         let cantidad = parseFloat(p.cantidad) || 0;
 
-        // 🚨 VALIDAR CANTIDAD
         if (cantidad <= 0) {
             hayError = true;
         }
 
-        let subtotal = parseFloat(p.precio) * cantidad;
+        let subtotal = p.precio * cantidad;
         total += subtotal;
 
-        tbody.append(`
-        <tr>
-            <td>${p.nombre}</td>
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.nombre}</td>
 
-          <td>
-                <input type="number"
-                    step="${p.tipo === 'peso' ? '0.01' : '1'}"
-                    min="${p.tipo === 'peso' ? '0.01' : '1'}"
-                    value="${p.cantidad}"
-                    class="form-control ${cantidad <= 0 || cantidad > p.stock ? 'is-invalid' : ''}"
-                    onchange="cambiarCantidad(${index}, this.value)">
+                <td>
+                    <input type="number"
+                        step="${p.tipo === 'peso' ? '0,001' : '1'}"
+                        min="${p.tipo === 'peso' ? '0,001' : '1'}"
+                        value="${p.cantidad}"
+                        class="form-control ${cantidad <= 0 || cantidad > p.stock ? 'is-invalid' : ''}"
+                        onchange="cambiarCantidad(${index}, this.value)">
 
-                <small class="d-block ${p.stock <= 0 ? 'text-danger' : 'text-muted'}">
-                    ${
-                        p.stock <= 0
-                        ? '❌ SIN STOCK'
-                        : 'Stock: ' + p.stock + (p.tipo === 'peso' ? ' Kg' : ' unidades')
-                    }
-                </small>
-            </td>
+                    <small class="d-block ${p.stock <= 0 ? 'text-danger' : 'text-muted'}">
+                        ${
+                            p.stock <= 0
+                            ? '❌ SIN STOCK'
+                            : 'Stock: ' + p.stock + (p.tipo === 'peso' ? ' Kg' : ' unidades')
+                        }
+                    </small>
+                </td>
 
-            <td>
-                ${p.tipo === 'peso' 
-                    ? '$' + p.precio.toLocaleString() + ' / Kg'
-                    : '$' + p.precio.toLocaleString()}
-            </td>
+                <td>
+                    ${p.tipo === 'peso' 
+                        ? 'Gs ' + p.precio.toLocaleString() + ' / Kg'
+                        : 'Gs ' + p.precio.toLocaleString()}
+                </td>
 
-            <td>$${subtotal.toLocaleString()}</td>
+                <td>Gs ${subtotal.toLocaleString()}</td>
 
-            <td>
-                <button class="btn btn-danger btn-sm"
-                    onclick="eliminarProducto(${index})">
-                    🗑
-                </button>
-            </td>
-        </tr>
-        `);
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm"
+                        onclick="eliminarProducto(${index})">
+                        🗑
+                    </button>
+                </td>
+            </tr>
+        `;
 
-        inputs.append(`
+        inputs.innerHTML += `
             <input type="hidden" name="productos[]" value="${p.id}">
             <input type="hidden" name="cantidades[]" value="${cantidad}">
             <input type="hidden" name="precios[]" value="${p.precio}">
-        `);
+        `;
     });
 
-    $('#total').val(total.toFixed(0));
-
-    // 🔥 REDONDEAR TOTAL (CLAVE)
-    let totalFinal = parseFloat(total) || 0;
-    totalFinal = parseFloat(totalFinal.toFixed(2));
-
-
-    $('#total').val(totalFinal);
+    // 🔥 TOTAL
+    let totalFinal = parseFloat(total.toFixed(3));
+    document.getElementById('total').value = totalFinal;
 
     // 🔥 BLOQUEAR BOTÓN
     let btnGuardar = document.getElementById('btn-guardar');
-    // 🚨 VALIDACIÓN COMPLETA
+
     if (productos.length === 0 || totalFinal <= 0 || hayError) {
         btnGuardar.disabled = true;
     } else {
         btnGuardar.disabled = false;
     }
 }
+// 🔥 AGREGAR PRODUCTO
+function agregarProductoDesdeBusqueda(producto) {
 
+    let cantidadInput = document.getElementById('cantidad_scan').value;
+
+    let cantidad = parseFloat(cantidadInput) || 1;
+
+    let existente = productos.find(p => p.id == producto.id);
+
+    if (existente) {
+
+        if (existente.cantidad + cantidad > producto.stock) {
+            alert("Stock insuficiente");
+            return;
+        }
+
+        existente.cantidad += cantidad;
+
+    } else {
+
+        if (producto.stock <= 0) {
+            alert("Sin stock");
+            return;
+        }
+
+        productos.push({
+            id: producto.id,
+            nombre: producto.nombre,
+            precio: parseFloat(producto.precio),
+            cantidad: cantidad,
+            tipo: producto.tipo,
+            stock: parseFloat(producto.stock)
+        });
+    }
+
+    renderTabla();
+    limpiarBuscador();
+
+    document.getElementById('cantidad_scan').value = 1;
+    document.getElementById('buscar_producto').value = '';
+    document.getElementById('resultados').innerHTML = '';
+    indexSeleccionado = -1;
+}
 function cambiarCantidad(index, valor) {
 
     let producto = productos[index];
     let cantidad = parseFloat(valor) || 0;
 
-    if (producto.tipo === 'unidad') {
-        cantidad = Math.floor(cantidad);
-    }
 
-    // 🚨 SIN STOCK
     if (producto.stock <= 0) {
         alert("Este producto no tiene stock");
         return;
     }
 
-    // 🚨 CANTIDAD INVÁLIDA
     if (cantidad <= 0) {
         alert("Cantidad inválida");
-        productos[index].cantidad = producto.tipo === 'peso' ? 0.01 : 1;
+        productos[index].cantidad = producto.tipo === 'peso' ? 0.001 : 1;
         renderTabla();
         return;
     }
 
-    // 🚨 STOCK INSUFICIENTE
     if (cantidad > producto.stock) {
         alert("Stock insuficiente");
         productos[index].cantidad = producto.stock;
@@ -279,163 +411,10 @@ function cambiarCantidad(index, valor) {
 
     renderTabla();
 }
-
 function eliminarProducto(index) {
     productos.splice(index, 1);
     renderTabla();
 }
-</script>
-<script>
-    document.addEventListener('change', function(e) {
 
-        if (e.target.classList.contains('producto-select')) {
-
-            let row = e.target.closest('.producto-item');
-            let option = e.target.selectedOptions[0];
-
-            let stock = parseFloat(option.dataset.stock);
-            let tipo = option.dataset.tipo;
-
-            let mensaje = row.querySelector('.mensaje-stock');
-            let unidad = row.querySelector('.unidad-label');
-            let inputCantidad = row.querySelector('.cantidad');
-
-            // Mostrar stock disponible
-            if (tipo === 'peso') {
-                mensaje.innerText = 'Stock disponible: ' + stock + ' Kg';
-                inputCantidad.step = "0.01";
-                inputCantidad.min = "0.01";
-            } else {
-                mensaje.innerText = 'Stock disponible: ' + stock + ' unidades';
-                inputCantidad.step = "1";
-                inputCantidad.min = "1";
-            }
-
-            // 🔴 SIN STOCK
-            if (stock <= 0) {
-                mensaje.innerText = '❌ SIN STOCK';
-                mensaje.classList.remove('text-muted');
-                mensaje.classList.add('text-danger');
-
-                inputCantidad.value = '';
-                inputCantidad.disabled = true;
-
-            } else {
-                inputCantidad.disabled = false;
-                mensaje.classList.remove('text-danger');
-                mensaje.classList.add('text-muted');
-            }
-        }
-    });
-</script>
-<script>
-    document.addEventListener('input', function() {
-
-        let valido = true;
-
-        document.querySelectorAll('.producto-item').forEach(function(row) {
-
-            let select = row.querySelector('.producto-select');
-            let cantidadInput = row.querySelector('.cantidad');
-
-            if (!select || !cantidadInput) return;
-
-            let option = select.selectedOptions[0];
-            if (!option) return;
-
-            let stock = parseFloat(option.dataset.stock);
-            let cantidad = parseFloat(cantidadInput.value) || 0;
-
-            if (cantidad <= 0 || cantidad > stock) {
-                valido = false;
-            }
-        });
-
-        document.querySelector('button[type="submit"]').disabled = !valido;
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-    const input = document.getElementById('codigo_barras');
-
-    if (!input) return;
-
-    input.focus();
-
-    input.addEventListener('keydown', function(e) {
-
-        if (e.key === 'Enter') {
-
-            e.preventDefault();
-
-            let codigo = this.value.trim();
-
-            let cantidadInput = document.getElementById('cantidad_scan').value;
-
-            let producto = productosDB.find(p => 
-                String(p.codigo_barras).trim() === String(codigo).trim()
-            );
-
-            if (!producto) {
-                alert("Producto no encontrado");
-                this.value = '';
-                return;
-            }
-
-            // 🔥 CANTIDAD SEGÚN TIPO
-            let cantidad;
-
-            if (producto.tipo === 'peso') {
-                cantidad = parseFloat(cantidadInput) || 0.01;
-            } else {
-                cantidad = parseInt(cantidadInput) || 1;
-            }
-
-            if (cantidad <= 0) {
-                alert("Cantidad inválida");
-                return;
-            }
-
-            let existente = productos.find(p => p.id == producto.id);
-
-            // 🔥 SI YA EXISTE → SUMA
-            if (existente) {
-
-                if (existente.cantidad + cantidad > producto.stock) {
-                    alert("Stock insuficiente");
-                    this.value = '';
-                    return;
-                }
-
-                existente.cantidad += cantidad;
-
-            } else {
-
-                if (cantidad > producto.stock) {
-                    alert("Stock insuficiente");
-                    this.value = '';
-                    return;
-                }
-
-                productos.push({
-                    id: producto.id,
-                    nombre: producto.nombre,
-                    precio: parseFloat(producto.precio),
-                    cantidad: cantidad,
-                    tipo: producto.tipo,
-                    stock: parseFloat(producto.stock)
-                });
-            }
-
-            renderTabla();
-
-            // 🔄 RESET
-            this.value = '';
-            document.getElementById('cantidad_scan').value = 1;
-            this.focus();
-        }
-    });
-});
 </script>
 @endpush

@@ -148,6 +148,7 @@
 
 
 
+
 @stack('scripts')
 @yield('scripts')
 </body>
