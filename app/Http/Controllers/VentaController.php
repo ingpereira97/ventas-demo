@@ -149,7 +149,7 @@ public function store(Request $request)
     public function show($id)
     {
                 // Buscar la venta con el ID proporcionado y cargar los productos relacionados
-                $venta = Venta::with('cliente', 'productos', 'cobros')->findOrFail($id);
+                $venta = Venta::with('cliente', 'productos', 'cobros', 'usuarioAnulo')->findOrFail($id);
                 
                 // Retornar la vista con la venta cargada
                 return view('ventas.show', compact('venta'));
@@ -157,49 +157,57 @@ public function store(Request $request)
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-    public function anular(Venta $venta)
+    public function anular(Request $request, Venta $venta)
     {
         if ($venta->estado === 'anulada') {
             return back()->with('error', 'La venta ya está anulada.');
         }
 
+        $request->validate([
+            'motivo' => 'required|string|max:500'
+        ]);
+
         DB::beginTransaction();
 
         try {
-            // 🔥 DEVOLVER STOCK
-            
+
+            // 🔁 DEVOLVER STOCK
             foreach ($venta->productos as $producto) {
                 $cantidad = $producto->pivot->cantidad;
                 $producto->increment('stock', $cantidad);
             }
 
-            // 🔥 Total realmente pagado
+            // 💰 TOTAL PAGADO
             $totalPagado = $venta->cobros->sum('monto_aplicado');
 
-            // 🔥 Caja
+            // 🏦 CAJA
             $caja = Caja::find($venta->caja_id);
 
             if ($caja && $totalPagado > 0) {
-
                 $caja->decrement('total_ventas', $totalPagado);
-
             }
 
-            // 🔥 Estado
-            $venta->estado = 'anulada';
-            $venta->saldo = 0;
-            $venta->save();
+            // 🧾 ANULACIÓN
+            $venta->update([
+                'estado' => 'anulada',
+                'saldo' => 0,
+                'motivo_anulacion' => $request->motivo,
+                'user_anulo_id' => auth()->id(),
+            ]);
 
             DB::commit();
 
-            return back()->with('success', 'Venta anulada correctamente.');
-
+            return redirect()
+            ->route('ventas.show', $venta->id)
+            ->with('success', 'Venta anulada correctamente.');
+            
         } catch (\Exception $e) {
 
             DB::rollBack();
             return back()->with('error', $e->getMessage());
         }
     }
+
     public function buscarProductos(Request $request)
     {
         $buscar = $request->q;

@@ -23,7 +23,28 @@
         <tr>
             <td>{{ $producto->id }}</td>
             <td>{{ $producto->nombre }}</td>
-            <td>{{ $producto->stock }}</td>
+           <td>
+
+                @if($producto->tipo == 'peso')
+                    <span class="badge bg-info">
+                        @if($producto->stock < 1)
+
+                            {{ number_format($producto->stock * 1000, 0, ',', '.') }} g
+
+                        @else
+
+                            {{ rtrim(rtrim(number_format($producto->stock, 3, '.', ''), '0'), '.') }} Kg
+
+                        @endif
+                    </span>
+                @else
+                    <span class="badge bg-secondary">
+                    {{ number_format($producto->stock, 0, ',', '.') }} unidades
+                    </span>
+
+                @endif
+
+            </td>         
             <td>Gs {{ number_format($producto->precio) }}</td>
             <td>Gs {{ number_format($producto->stock * $producto->precio) }}</td>
         </tr>

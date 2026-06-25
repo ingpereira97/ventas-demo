@@ -43,12 +43,15 @@ class ProductoController extends Controller
      */
     public function store(Request $request){
     $request->validate([
-        'codigo_barras' => 'nullable|string|max:255',
+        'codigo_barras' => 'nullable|string|unique:productos,codigo_barras',
+        
         'nombre' => 'required|string|max:255',
         'descripcion' => 'nullable|string',
         'precio' => 'required|numeric',
         'stock' => 'required|numeric',
         'tipo' => 'required|in:unidad,peso',
+        ], [
+            'codigo_barras.unique' => 'Este código de barras ya está registrado.',
     ]);
 
     Producto::create([
@@ -102,7 +105,7 @@ class ProductoController extends Controller
     public function update(Request $request, Producto $producto)
     {
         $request->validate([
-            'codigo_barras' => 'required|string',
+            'codigo_barras' => 'nullable|string|unique:productos,codigo_barras,' . $producto->id,            
             'nombre' => 'required|string',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric',

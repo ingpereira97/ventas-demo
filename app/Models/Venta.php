@@ -9,7 +9,7 @@ class Venta extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cliente_id', 'user_id', 'total','estado', 'saldo'];
+    protected $fillable = ['cliente_id', 'user_id', 'total','estado', 'saldo', 'motivo_anulacion', 'user_anulo_id'];
 
     public function cliente()
     {
@@ -34,6 +34,10 @@ class Venta extends Model
         return $this->belongsTo(Caja::class);
     }
 
+    public function usuarioAnulo()
+    {
+        return $this->belongsTo(User::class, 'user_anulo_id');
+    }
 
 
 }

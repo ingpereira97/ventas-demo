@@ -73,44 +73,49 @@
                                 @endif
                             </td>
 
-                            <td>
+                        <td>
 
-                                {{-- ❌ SI ESTÁ ANULADA --}}
-                                @if($venta->estado === 'anulada')
-                                    <span class="badge bg-danger">Anulada</span>
+                            {{-- ❌ SI ESTÁ ANULADA --}}
+                            @if($venta->estado === 'anulada')
 
-                                {{-- 🔴 SI ESTÁ PENDIENTE --}}
-                                @elseif($venta->estado === 'pendiente')
+                                {{-- 🧾 RECIBO SIEMPRE --}}
+                                <a href="{{ route('ventas.show', $venta->id) }}" 
+                                    class="btn btn-danger btn-sm">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
 
-                                    {{-- 💰 COBRAR --}}
-                                    <a href="{{ route('cobros.create', $venta->id) }}" 
-                                        class="btn btn-success btn-sm">
-                                        <i class="fas fa-dollar-sign"></i>
-                                    </a>
+                            {{-- 🔴 SI ESTÁ PENDIENTE --}}
+                            @elseif($venta->estado === 'pendiente')
 
-                                    {{-- ❌ ANULAR --}}
-                                    <button class="btn btn-danger btn-sm btn-anular" data-id="{{ $venta->id }}">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                {{-- 💰 COBRAR --}}
+                                <a href="{{ route('cobros.create', $venta->id) }}" 
+                                    class="btn btn-success btn-sm">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </a>
 
-                                    {{-- 🧾 RECIBO --}}
-                                    <a href="{{ route('ventas.show', $venta->id) }}" 
-                                        class="btn btn-info btn-sm">
-                                        <i class="fas fa-file-invoice"></i>
-                                    </a>
+                                {{-- ❌ ANULAR --}}
+                                <button class="btn btn-danger btn-sm" onclick="anularVenta({{ $venta->id }})">
+                                    <i class="fas fa-times"></i>
+                                </button>
 
-                                {{-- 🟢 SI YA PAGÓ --}}
-                                @else
+                                {{-- 🧾 RECIBO --}}
+                                <a href="{{ route('ventas.show', $venta->id) }}" 
+                                    class="btn btn-info btn-sm">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
 
-                                    {{-- 🧾 SOLO RECIBO --}}
-                                    <a href="{{ route('ventas.show', $venta->id) }}" 
-                                        class="btn btn-info btn-sm">
-                                        <i class="fas fa-file-invoice"></i>
-                                    </a>
+                            {{-- 🟢 SI YA PAGÓ --}}
+                            @else
 
-                                @endif
+                                {{-- 🧾 RECIBO --}}
+                                <a href="{{ route('ventas.show', $venta->id) }}" 
+                                    class="btn btn-info btn-sm">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
 
-                            </td>
+                            @endif
+
+                        </td>
 
                         </tr>
                     @endforeach
@@ -284,5 +289,43 @@
         });
 
     });
+
+
+    function anularVenta(id) {
+
+        Swal.fire({
+            title: 'Anular venta',
+            input: 'textarea',
+            inputLabel: 'Motivo de anulación',
+            inputPlaceholder: 'Escriba el motivo...',
+            inputAttributes: {
+                'aria-label': 'Motivo'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Anular',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Debes escribir un motivo';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                // 🔥 crear form dinámico
+                let form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url('/ventas') }}/${id}/anular`;
+                form.innerHTML = `
+                    @csrf
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" name="motivo" value="${result.value}">
+                `;
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
 </script>
 @endpush

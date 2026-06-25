@@ -11,6 +11,8 @@ use App\Http\Controllers\CompraController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\InformeController;
+use App\Http\Controllers\UsuarioController;
+
 
 
 
@@ -29,6 +31,11 @@ use App\Http\Controllers\InformeController;
 
 Route::get('/', function () {
     return redirect()->route('login');  // Redirige a la ruta de login
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+    Route::post('/usuarios/{user}/rol', [UsuarioController::class, 'updateRole'])->name('usuarios.updateRole');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -63,8 +70,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('clientes', \App\Http\Controllers\ClienteController::class);
     Route::resource('ventas', \App\Http\Controllers\VentaController::class);
     Route::resource('proveedores', \App\Http\Controllers\ProveedorController::class);
-
-    
+    Route::resource('usuarios', UsuarioController::class)->parameters(['usuarios' => 'user']);
+        
 });
 
 

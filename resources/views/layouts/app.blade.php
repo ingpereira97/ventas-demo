@@ -109,6 +109,14 @@
                             <p>Informes</p>
                         </a>
                     </li>
+                    @role('admin')
+                        <li class="nav-item">
+                            <a href="{{ route('usuarios.index') }}" class="nav-link">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Usuarios</p>
+                            </a>
+                        </li>
+                    @endrole
 
                     <!-- Agrega aquí más menús -->
                 </ul>
@@ -130,6 +138,7 @@
 <script src="{{ asset('adminlte/plugins/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('adminlte/dist/js/adminlte.min.js') }}"></script>
+<script src="{{ asset('adminlte/dist/js/sweetalert2.js') }}"></script>
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
@@ -145,6 +154,7 @@
 <script src="{{ asset('adminlte/dist/js/bootstrap.bundle.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 
 

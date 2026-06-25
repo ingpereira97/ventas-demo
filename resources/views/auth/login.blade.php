@@ -4,8 +4,13 @@
 
         <!-- Email -->
         <div>
-            <label for="email">Correo electrónico</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus class="mt-1 block w-full rounded border-gray-300" />
+            <label for="login"> Usuario o Correo electrónico</label>
+            <input type="text" name="login" class="mt-1 block w-full rounded border-gray-300" placeholder="Usuario o Correo" required autofocus>
+            @error('login')
+                <div class="text-red-600 mt-1 text-sm">
+                    {{ $message }}
+                </div>
+            @enderror
         </div>
 
         <!-- Contraseña -->

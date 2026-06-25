@@ -57,13 +57,13 @@
                                         @if($producto->tipo == 'peso')
 
                                             @if($producto->stock < 1)
-                                                {{ $producto->stock * 1000 }} g
+                                                {{ number_format($producto->stock * 1000, 0, ',', '.') }} g
                                             @else
-                                                {{ number_format($producto->stock, 2) }} Kg
+                                                {{ rtrim(rtrim(number_format($producto->stock, 3, '.', ''), '0'), '.') }} Kg
                                             @endif
 
                                         @else
-                                            {{ number_format($producto->stock, 0) }} 
+                                            {{ number_format($producto->stock, 0, ',', '.') }} 
                                         @endif
 
                                     </span>

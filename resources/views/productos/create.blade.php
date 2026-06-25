@@ -37,7 +37,7 @@
 
                 <div class="form-group">
                     <label for="precio">Precio</label>
-                    <input type="number" step="0.01" class="form-control" name="precio" required>
+                    <input type="number" step="0.001" class="form-control" name="precio" required>
                     <small class="text-muted">Si es por kilo, este será el precio por Kg</small>
                 </div>
 
@@ -45,7 +45,7 @@
                     <label for="stock">
                         Stock <span id="unidad_texto">(Unidades)</span>
                     </label>
-                    <input type="number" step="0.01" class="form-control" name="stock" required>
+                    <input type="number" step="0.001" class="form-control" name="stock" required>
                 </div>
 
             </div>

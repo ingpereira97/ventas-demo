@@ -12,6 +12,14 @@
                 @csrf
                 @method('PUT')
 
+                <div class="form-group mb-3">
+                    <label>Código de Barras</label>
+
+                    <input type="text" name="codigo_barras"
+                        value="{{ old('codigo_barras', $producto->codigo_barras) }}"
+                        class="form-control">
+                </div>
+
                 {{-- NOMBRE --}}
                 <div class="form-group mb-3">
                     <label>Nombre</label>
@@ -49,8 +57,8 @@
                         <small class="text-muted">(por unidad o Kg)</small>
                     </label>
 
-                    <input type="number" step="0.01" name="precio"
-                        value="{{ old('precio', $producto->precio, 0) }}"
+                    <input type="number" step="0.001" name="precio"
+                        value="{{ old('precio', rtrim(rtrim($producto->precio, '0'), '.')) }}"
                         class="form-control" required>
                 </div>
 
@@ -58,12 +66,12 @@
                 <div class="form-group mb-3">
                     <label>Stock</label>
 
-                    <input type="number" step="0.01" name="stock"
-                        value="{{ old('stock', $producto->stock) }}"
+                    <input type="number" step="0.001" name="stock"
+                        value="{{ old('stock', rtrim(rtrim($producto->stock, '0'), '.')) }}"
                         class="form-control" required>
 
                     <small class="text-muted">
-                        Si es por peso: en Kg (ej: 5.50)
+                        Si es por peso: en Kg (ej: 5.500)
                     </small>
                 </div>
 

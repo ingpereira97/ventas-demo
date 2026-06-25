@@ -5,27 +5,82 @@
 @section('content')
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-12 col-md-9">
+        <div class="col-12 col-md-4">
             <div class="card">
                 <div class="card-body">
 
                     <!-- Contenedor del ticket para POS 58mm -->
-                    <div class="ticket" style="font-family: 'Courier New', monospace; width: 260mm; margin: auto; padding: 5px; border: 1px solid #ddd;">
-
+                    <div class="ticket" style="
+                        position: relative;
+                        font-family: 'Courier New', monospace;
+                        width: 100%;
+                        max-width: 380px;
+                        margin: auto;
+                        padding: 5px;
+                        border: 1px solid #ddd;
+                    ">
+                        @if($venta->estado === 'anulada')
+                            <div style="
+                                position:absolute;
+                                top:40%;
+                                left:10%;
+                                font-size:60px;
+                                color:red;
+                                opacity:0.1;
+                                transform:rotate(-30deg);
+                                pointer-events:none;
+                                z-index:0;
+                                width:100%;
+                                text-align:center;
+                            ">
+                                ANULADA
+                            </div>
+                        @endif
                         <div style="text-align:center; margin-bottom:10px;">
                             <img src="{{ asset('img/AleyH.png') }}" 
-                                style="max-width:300px; padding:7px;">
+                                style="max-width:200px; padding:7px;">
                         </div>
-                        <h3 style="text-align:center; font-size:30px; font-weight:bold;">Pa'i Perez casi Tte. Gutierrez - Itauguá - Paraguay</h3>
-                        <h3 style="text-align:center; font-size:30px; font-weight:bold;">Cel.: (0983) 460 212</h3>
+                        <h3 style="text-align:center; font-size:12px; font-weight:bold;">Pa'i Perez casi Tte. Gutierrez - Itauguá - Paraguay</h3>
+                        <h3 style="text-align:center; font-size:12px; font-weight:bold;">Cel.: (0983) 460 212</h3>
 
-                        <p style="font-size:30px; font-weight:bold;"><strong>Cliente:</strong> {{ $venta->cliente->nombre ?? 'Ocasional' }}</p>
-                        <p style="font-size:30px; font-weight:bold;"><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
-                        <p style="font-size:30px; font-weight:bold;"><strong>Nro. Comprobante:</strong> {{ $venta->nro_comprobante }}</p>
+                        <p style="font-size:12px; font-weight:bold;"><strong>Cliente:</strong> {{ $venta->cliente->nombre ?? 'Ocasional' }}</p>
+                        <p style="font-size:12px; font-weight:bold;"><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
+                        <p style="font-size:12px; font-weight:bold;"><strong>Nro. Comprobante:</strong> {{ $venta->nro_comprobante }}</p>
+                        @if($venta->estado === 'anulada')
+                            <hr style="border-top: 2px solid red; margin: 5px 0;">
+
+                            <div style="font-size:20px; font-weight:bold; color:red; text-align:center;">
+                                DETALLE DE ANULACIÓN
+                            </div>
+
+                            <hr style="border-top: 1px dashed red; margin: 5px 0;">
+
+                            <div style="font-size:20px; font-weight:bold;">
+                                Motivo:
+                            </div>
+
+                            <div style="font-size:12px;">
+                                {{ $venta->motivo_anulacion }}
+                            </div>
+
+                            <br>
+
+                            <div style="font-size:20px;">
+                                <strong>Anulado por:</strong> 
+                                {{ $venta->usuarioAnulo->name ?? 'N/A' }}
+                            </div>
+
+                            <div style="font-size:20px;">
+                                <strong>Fecha de anulación:</strong> 
+                                {{ $venta->updated_at->format('d/m/Y H:i') }}
+                            </div>
+
+                            <hr style="border-top: 2px solid red; margin: 5px 0;">
+                        @endif
 
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
-                        <table style="width:100%; font-size:30px; border-collapse: collapse;">
+                        <table style="width:100%; font-size:12px; border-collapse: collapse;">
                             <thead>
                                 <tr>
                                     <th style="text-align:left;">Producto</th>
@@ -70,18 +125,18 @@
                             </tbody>
                         </table>
 
-                        <hr style="border-top: 1px dashed #000; margin: 2px 0; font-size:55px;">
-                        <p style="text-align:center; font-weight:bold; font-size:55px;">TOTAL: Gs.{{ number_format($venta->total, 0) }}</p>
+                        <hr style="border-top: 1px dashed #000; margin: 2px 0; font-size:20px;">
+                        <p style="text-align:center; font-weight:bold; font-size:22px;">TOTAL: Gs.{{ number_format($venta->total, 0) }}</p>
                         @if($venta->cobros && $venta->cobros->count() > 0)
 
                             <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
-                            <p style="text-align:center; font-weight:bold; font-size:45px;">
+                            <p style="text-align:center; font-weight:bold; font-size:20px;">
                                     PAGOS REALIZADOS
                             </p>
 
                                 @forelse($venta->cobros as $cobro)
-                                    <div style="text-align:center; font-size:30px; font-weight:bold;">
+                                    <div style="text-align:center; font-size:20px; font-weight:bold;">
                                      
                                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
@@ -97,30 +152,44 @@
                         @endif
                             <hr style="text-align:center; border-top: 1px dashed #000; margin: 2px 0;">
                         {{-- 🔥 ESTADO DE PAGO --}}
-                        @if($venta->estado == 'pendiente')
+                        @if($venta->estado == 'anulada')
+
+                            <p style="text-align:center; font-weight:bold; font-size:20px; color:red;">
+                                ❌ ANULADA
+                            </p>
+
+                        @elseif($venta->estado == 'pendiente')
 
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
-                            <p style="text-align:center; font-weight:bold; font-size:55px; color:red;">
+                            <p style="text-align:center; font-weight:bold; font-size:20px; color:red;">
                                 ⚠️ PENDIENTE DE PAGO
                             </p>
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
-                            <p style="text-align:center; font-weight:bold; font-size:50px;">
+                            <p style="text-align:center; font-weight:bold; font-size:22px;">
                                 Saldo: Gs.{{ number_format($venta->saldo, 0) }}
                             </p>
 
                         @else
 
-                            <p style="text-align:center; font-weight:bold; font-size:55px; color:green;">
+                            <p style="text-align:center; font-weight:bold; font-size:22px; color:green;">
                                 ✔️ PAGADO
                             </p>
 
                         @endif
 
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
-                        <p style="text-align:center; font-weight:bold; font-size:55px;">¡Gracias por su compra!</p>
-                        <p style="text-align:center; font-size:55px;">--------------------------</p>
+                        @if($venta->estado === 'anulada')
+                            <p style="text-align:center; font-weight:bold; font-size:20px; color:red;">
+                                ⚠️ COMPROBANTE ANULADO
+                            </p>
+                        @else
+                            <p style="text-align:center; font-weight:bold; font-size:22px;">
+                                ¡Gracias por su compra!
+                            </p>
+                        @endif
+                        <p style="text-align:center; font-size:22px;">--------------------------</p>
                       
 
                     </div>
@@ -138,7 +207,14 @@
 </div>
 
 <style>
+
+@page {
+    size: 76mm auto;
+    margin: 0;
+}
+
 @media print {
+
     body {
         margin: 0;
         padding: 0;
@@ -148,29 +224,52 @@
         display: none; /* Oculta botones */
     }
 
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+
     .ticket {
-        width: 58mm; /* Tamaño del POS mini 58mm */
-        margin: 0;
-        padding: 5px;
+        width: 76mm !important;
+        max-width: 76mm !important;
+        margin: 0 auto;
+        padding: 2mm;
         border: none;
         font-family: 'Courier New', monospace;
-        font-size: 12px; /* Tamaño general */
+        font-size: 10px;
     }
 
     .ticket hr {
         border-top: 1px dashed #000;
-        margin: 2px 0;
+        margin: 1px 0;
     }
 
     .ticket table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 16px;
+        font-size: 10px;
     }
 
     .ticket table th,
     .ticket table td {
         padding: 2px 0;
+    }
+
+    img {
+        max-width: 120px !important;
+        height: auto;
+    }
+
+    h3 {
+        font-size: 11px !important;
+        margin: 2px 0;
+    }
+
+    p,
+    div,
+    span {
+        font-size: 10px !important;
+        margin: 1px 0;
     }
 }
 </style>
