@@ -63,20 +63,36 @@
 
                 {{-- inputs ocultos --}}
                 <div class="mb-2" id="inputs-hidden"></div>
+                <!-- === NUEVA SECCIÓN DE DELIVERY === -->
+                    <div class="row mb-3 align-items-center bg-light p-2 rounded border">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <!-- Checkbox para activar/desactivar delivery -->
+                                <input class="form-check-input" type="checkbox" id="con_delivery" name="con_delivery" value="1">
+                                <label class="form-check-label fw-bold" for="con_delivery">¿Incluye Delivery?</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Input para el precio (Oculto por defecto) -->
+                            <div class="input-group d-none" id="div_costo_delivery">
+                                <span class="input-group-text">Gs</span>
+                                <input type="number" name="costo_delivery" id="costo_delivery" class="form-control" placeholder="Monto" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Total -->
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Total</label>
-                    <input type="text" name="total" id="total" class="form-control" readonly value="0">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tipo de Venta</label>
-                    <select name="tipo_pago" class="form-control" required>
-                        <option value="contado">Contado</option>
-                        <option value="credito">Crédito</option>
-                    </select>
-                </div>
-
+                    <!-- Total (Tu div original, no cambia, solo queda debajo) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Total</label>
+                        <input type="text" name="total" id="total" class="form-control" readonly value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Venta</label>
+                        <select name="tipo_pago" class="form-control" required>
+                            <option value="contado">Contado</option>
+                            <option value="credito">Crédito</option>
+                        </select>
+                    </div>
                 <button type="submit" id="btn-guardar" class="btn btn-primary">Guardar Venta</button>
             </div>
         </div>
@@ -328,8 +344,13 @@ function renderTabla() {
         `;
     });
 
-    // 🔥 TOTAL
-    let totalFinal = parseFloat(total.toFixed(3));
+   // 🔥 TOTAL CON DELIVERY (CÓDIGO NUEVO)
+    let costoDelivery = parseFloat(document.getElementById('costo_delivery').value) || 0;
+    
+    // Sumamos el total de productos + el costo del delivery
+    let totalFinal = parseFloat(total.toFixed(3)) + costoDelivery; 
+    
+    // Mostramos el total (Le agrego toLocaleString para que se vea con separador de miles en Gs)
     document.getElementById('total').value = totalFinal;
 
     // 🔥 BLOQUEAR BOTÓN
@@ -415,6 +436,27 @@ function eliminarProducto(index) {
     productos.splice(index, 1);
     renderTabla();
 }
+// 🔥 LÓGICA PARA EL DELIVERY
+const chkDelivery = document.getElementById('con_delivery');
+const divCostoDelivery = document.getElementById('div_costo_delivery');
+const inputCostoDelivery = document.getElementById('costo_delivery');
 
+// Evento cuando se marca o desmarca la casilla
+chkDelivery.addEventListener('change', function() {
+    if (this.checked) {
+        divCostoDelivery.classList.remove('d-none');
+        inputCostoDelivery.value = ''; // Limpiar para que escriba
+        inputCostoDelivery.focus();
+    } else {
+        divCostoDelivery.classList.add('d-none');
+        inputCostoDelivery.value = 0; // Regresar a 0
+    }
+    renderTabla(); // Recalcular total general
+});
+
+// Evento cuando el cajero escribe el monto del delivery
+inputCostoDelivery.addEventListener('input', function() {
+    renderTabla(); // Recalcular total general mientras escribe
+});
 </script>
 @endpush

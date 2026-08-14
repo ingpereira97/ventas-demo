@@ -10,15 +10,7 @@
                 <div class="card-body">
 
                     <!-- Contenedor del ticket para POS 58mm -->
-                    <div class="ticket" style="
-                        position: relative;
-                        font-family: 'Courier New', monospace;
-                        width: 100%;
-                        max-width: 380px;
-                        margin: auto;
-                        padding: 5px;
-                        border: 1px solid #ddd;
-                    ">
+                    <div class="ticket">
                         @if($venta->estado === 'anulada')
                             <div style="
                                 position:absolute;
@@ -40,12 +32,12 @@
                             <img src="{{ asset('img/AleyH.png') }}" 
                                 style="max-width:200px; padding:7px;">
                         </div>
-                        <h3 style="text-align:center; font-size:12px; font-weight:bold;">Pa'i Perez casi Tte. Gutierrez - Itauguá - Paraguay</h3>
-                        <h3 style="text-align:center; font-size:12px; font-weight:bold;">Cel.: (0983) 460 212</h3>
+                        <h3 style="text-align:center; font-size:20px; font-weight:bold;">Pa'i Perez casi Tte. Gutierrez - Itauguá - Paraguay</h3>
+                        <h3 style="text-align:center; font-size:20px; font-weight:bold;">Cel.: (0987) 485 836</h3>
 
-                        <p style="font-size:12px; font-weight:bold;"><strong>Cliente:</strong> {{ $venta->cliente->nombre ?? 'Ocasional' }}</p>
-                        <p style="font-size:12px; font-weight:bold;"><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
-                        <p style="font-size:12px; font-weight:bold;"><strong>Nro. Comprobante:</strong> {{ $venta->nro_comprobante }}</p>
+                        <p style="font-size:20px; font-weight:bold;"><strong>Cliente:</strong> {{ $venta->cliente->nombre ?? 'Ocasional' }}</p>
+                        <p style="font-size:20px; font-weight:bold;"><strong>Fecha:</strong> {{ $venta->created_at->format('d/m/Y H:i') }}</p>
+                        <p style="font-size:20px; font-weight:bold;"><strong>Nro. Comprobante:</strong> {{ $venta->nro_comprobante }}</p>
                         @if($venta->estado === 'anulada')
                             <hr style="border-top: 2px solid red; margin: 5px 0;">
 
@@ -59,7 +51,7 @@
                                 Motivo:
                             </div>
 
-                            <div style="font-size:12px;">
+                            <div style="font-size:13px;">
                                 {{ $venta->motivo_anulacion }}
                             </div>
 
@@ -80,7 +72,7 @@
 
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
-                        <table style="width:100%; font-size:12px; border-collapse: collapse;">
+                        <table style="width:100%; font-size:18px; border-collapse: collapse;">
                             <thead>
                                 <tr>
                                     <th style="text-align:left;">Producto</th>
@@ -114,19 +106,36 @@
                                     </td>
                                     <td style="text-align:center;">
                                         @if($producto->tipo == 'peso')
-                                            Gs.{{ number_format($producto->pivot->subtotal / $producto->pivot->cantidad, 0) }} / Kg
+                                            Gs.{{ number_format($producto->pivot->subtotal / $producto->pivot->cantidad, 0, ',', '.') }} /Kg
                                         @else
-                                            Gs.{{ number_format($producto->pivot->subtotal / $producto->pivot->cantidad, 0) }}
+                                            Gs.{{ number_format($producto->pivot->subtotal / $producto->pivot->cantidad, 0, ',', '.') }}
                                         @endif
                                     </td> 
-                                    <td style="text-align:center;">Gs.{{ number_format($producto->pivot->cantidad * $producto->precio, 0) }}</td>
+                                    <td style="text-align:center;">Gs.{{ number_format($producto->pivot->cantidad * $producto->precio, 0, ',', '.') }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
 
-                        <hr style="border-top: 1px dashed #000; margin: 2px 0; font-size:20px;">
-                        <p style="text-align:center; font-weight:bold; font-size:22px;">TOTAL: Gs.{{ number_format($venta->total, 0) }}</p>
+                        <hr style="border-top: 1px dashed #000; margin: 2px 0;">
+                        
+                        {{-- 🔥 DESGLOSE DE TOTALES Y DELIVERY --}}
+                        @if($venta->costo_delivery > 0)
+                            <div style="display: flex; justify-content: space-between; font-size:18px; font-weight:bold;">
+                                <span>Subtotal Productos:</span>
+                                <span>Gs.{{ number_format($venta->total - $venta->costo_delivery, 0, ',', '.') }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size:18px; font-weight:bold;">
+                                <span>Delivery:</span>
+                                <span>Gs.{{ number_format($venta->costo_delivery, 0, ',', '.') }}</span>
+                            </div>
+                            <hr style="border-top: 1px dashed #000; margin: 2px 0;">
+                        @endif
+
+                        <p style="text-align:center; font-weight:bold; font-size:22px; margin: 4px 0;">
+                            TOTAL: Gs.{{ number_format($venta->total, 0, ',', '.') }}
+                        </p>
+
                         @if($venta->cobros && $venta->cobros->count() > 0)
 
                             <hr style="border-top: 1px dashed #000; margin: 2px 0;">
@@ -141,16 +150,17 @@
                                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
                                         Fecha: {{ $cobro->created_at->format('d/m/Y H:i') }} <br>
-                                        Entregado: Gs {{ number_format($cobro->monto_pagado) }} <br>
-                                        Vuelto: Gs {{ number_format($cobro->monto_pagado - $cobro->monto_aplicado) }}
+                                        Entregado: Gs {{ number_format($cobro->monto_pagado, 0, ',', '.') }} <br>
+                                        Vuelto: Gs {{ number_format($cobro->monto_pagado - $cobro->monto_aplicado, 0, ',', '.') }}
 
-                                        
                                     </div>
                                 @empty
                                     <p class="text-muted">Sin pagos registrados</p>
                                 @endforelse
                         @endif
-                            <hr style="text-align:center; border-top: 1px dashed #000; margin: 2px 0;">
+
+                        <hr style="text-align:center; border-top: 1px dashed #000; margin: 2px 0;">
+
                         {{-- 🔥 ESTADO DE PAGO --}}
                         @if($venta->estado == 'anulada')
 
@@ -168,7 +178,7 @@
                         <hr style="border-top: 1px dashed #000; margin: 2px 0;">
 
                             <p style="text-align:center; font-weight:bold; font-size:22px;">
-                                Saldo: Gs.{{ number_format($venta->saldo, 0) }}
+                                Saldo: Gs.{{ number_format($venta->saldo, 0, ',', '.') }}
                             </p>
 
                         @else
@@ -196,7 +206,7 @@
 
                     <!-- Botones de navegación -->
                     <div class="text-center mt-4 no-print">
-                        <a href="{{ route('ventas.index') }}" class="btn btn-secondary">Volver al listado de ventas</a>
+                        <a href="{{ url()->previous() }}" class="btn btn-secondary">Volver</a>
                         <button class="btn btn-primary" onclick="window.print()">Imprimir Recibo</button>
                     </div>
 
@@ -207,69 +217,129 @@
 </div>
 
 <style>
+/* ==========================================
+   1. ESTILOS PARA LA PANTALLA (Navegador)
+   ========================================== */
+.ticket {
+    font-family: 'Courier New', Courier, monospace;
+    width: 100%;
+    max-width: 520px;
+    margin: 10px auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #000;
+    font-size: 13px;
+}
+.card {
+    width: 600px;    
+}
 
+/* ==========================================
+   2. ESTILOS EXCLUSIVOS DE IMPRESIÓN (Epson TM-U220)
+   ========================================== */
 @page {
-    size: 76mm auto;
-    margin: 0;
+    size: 76mm auto; /* Fuerza el tamaño de bobina de 76mm */
+    margin: 0;       /* Elimina los márgenes predeterminados de la hoja */
 }
 
 @media print {
-
-    body {
-        margin: 0;
-        padding: 0;
+    /* Oculta todo el contenido de la web excepto el ticket */
+    body * {
+        visibility: hidden;
     }
 
     .no-print {
-        display: none; /* Oculta botones */
+        display: none !important;
     }
 
-    .card {
-        border: none;
-        box-shadow: none;
+    /* Muestra únicamente el ticket centrado en el área de impresión */
+    .ticket, .ticket * {
+        visibility: visible;
     }
 
     .ticket {
-        width: 76mm !important;
-        max-width: 76mm !important;
-        margin: 0 auto;
-        padding: 2mm;
-        border: none;
-        font-family: 'Courier New', monospace;
-        font-size: 10px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72mm !important;       /* Ancho imprimible exacto */
+        max-width: 72mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        font-size: 12px !important;    /* Tamaño legible para agujas de matriz */
+        line-height: 1.2 !important;
+        color: #000 !important;
     }
 
-    .ticket hr {
-        border-top: 1px dashed #000;
-        margin: 1px 0;
-    }
-
+    /* Configuración de tabla para no desbordar */
     .ticket table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 10px;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        font-size: 10px !important;
     }
 
     .ticket table th,
     .ticket table td {
-        padding: 2px 0;
+        padding: 2px 0 !important;
+        word-wrap: break-word;
     }
 
-    img {
-        max-width: 120px !important;
-        height: auto;
+    .ticket table th:nth-child(1), 
+    .ticket table td:nth-child(1) { 
+        width: 28% !important; 
+        text-align: left !important; 
     }
 
-    h3 {
-        font-size: 11px !important;
-        margin: 2px 0;
+    .ticket table th:nth-child(2), 
+    .ticket table td:nth-child(2) { 
+        width: 18% !important; 
+        text-align: center !important; 
     }
 
-    p,
-    div,
-    span {
-        font-size: 10px !important;
-        margin: 1px 0;
+    .ticket table th:nth-child(3), 
+    .ticket table td:nth-child(3) { 
+        width: 27% !important; 
+        text-align: right !important; 
+        white-space: nowrap !important;
+    }
+
+    .ticket table th:nth-child(4), 
+    .ticket table td:nth-child(4) { 
+        width: 27% !important; 
+        text-align: right !important; 
+        white-space: nowrap !important;
+    }
+
+    /* Separadores punteados limpios para cinta de tinta */
+    .ticket hr {
+        border: none !important;
+        border-top: 1px dashed #000 !important;
+        margin: 3px 0 !important;
+    }
+
+    /* Textos y títulos */
+    .ticket h3 {
+        font-size: 13px !important;
+        font-weight: bold !important;
+        margin: 2px 0 !important;
+        text-align: center;
+    }
+
+    .ticket p, 
+    .ticket div, 
+    .ticket span {
+        font-size: 12px !important;
+        margin: 1px 0 !important;
+    }
+
+    /* Optimización de logo para impresora matricial */
+    .ticket img {
+        max-width: 100% !important;
+        height: auto !important;
+        filter: grayscale(100%);
     }
 }
 </style>

@@ -36,8 +36,8 @@ public function store(Request $request)
         'productos' => 'required|array',
         'cantidades' => 'required|array',
         'total' => 'required|numeric|min:0',
+        'costo_delivery' => 'nullable|numeric|min:0', // 🔥 Nueva validación
     ]);
-
 
     // 🔒 Verificar caja abierta ANTES de vender
     $caja = Caja::where('user_id', auth()->id())
@@ -51,7 +51,6 @@ public function store(Request $request)
     DB::beginTransaction();
 
     try {
-
         $venta = new Venta();
 
         $venta->cliente_id = $request->cliente_id != 0 
@@ -60,8 +59,7 @@ public function store(Request $request)
 
         $venta->user_id = auth()->id();
         $venta->caja_id = $caja->id;
-        $venta->total = 0; // 🔥 lo recalculamos nosotros
-
+        $venta->total = 0; 
         // Generar nro comprobante
         $ultimo = Venta::latest('id')->first();
         $numero = $ultimo ? $ultimo->id + 1 : 1;
@@ -69,10 +67,9 @@ public function store(Request $request)
 
         $venta->save();
 
-        $total = 0; // 🔥 AQUÍ estaba el error
+        $total = 0; 
 
         foreach ($request->productos as $index => $producto_id) {
-
             $producto = Producto::find($producto_id);
 
             if (!$producto) {
@@ -104,45 +101,76 @@ public function store(Request $request)
             $total += $subtotal;
         }
 
-       // 🔥 TODAS LAS VENTAS INICIAN COMO PENDIENTE
+        // 🔥 CALCULAMOS EL DELIVERY Y LO SUMAMOS AL TOTAL
+        // Si marcó la casilla (con_delivery) tomamos el monto, sino 0
+        $costoDelivery = $request->has('con_delivery') ? ($request->costo_delivery ?: 0) : 0;
+        $total += $costoDelivery; 
+
+        // 🔥 TODAS LAS VENTAS INICIAN COMO PENDIENTE
         $estado = 'pendiente';
-        $saldo = $total;
-        // 🔥 Actualizamos el total real calculado
+        $saldo = $total; // Ahora el saldo ya incluye el delivery automáticamente
+
+        // 🔥 Actualizamos el total real calculado y el costo de delivery
         $venta->update([
+            'costo_delivery' => $costoDelivery, // Guardamos el costo por separado en la BD
             'total' => $total,
             'estado' => $estado,
             'saldo' => $saldo,
-            'tipo_pago' => $request->tipo_pago // 🔥 importante
+            'tipo_pago' => $request->tipo_pago
         ]);
         
-
         DB::commit();
 
         if ($request->tipo_pago === 'contado') {
             return redirect()->route('cobros.create', $venta->id);
         }
 
-            return redirect()->route('ventas.index')
-                ->with('success', 'Venta registrada exitosamente.');
+        return redirect()->route('ventas.index')
+            ->with('success', 'Venta registrada exitosamente.');
                 
     } catch (\Exception $e) {
-
         DB::rollBack();
-
         return back()->with('error', $e->getMessage());
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
     // Mostrar listado de ventas (opcional)
-    public function index()
-    {
-        $ventas = Venta::with('cliente', 'productos', 'cobros')
-                        ->orderBy('created_at', 'desc')
-                        ->get();
 
-        return view('ventas.index', compact('ventas'));
+public function index(Request $request)
+{
+    // 1. Determinar la fecha que se va a filtrar
+    if ($request->has('fecha') && $request->fecha != '') {
+        // Si el usuario eligió una fecha en el buscador/filtro
+        $fecha = $request->fecha;
+    } else {
+        // Si no eligió fecha, buscamos si hay una caja abierta actualmente
+        $cajaAbierta = Caja::where('estado', 'abierta')
+                           // ->where('user_id', auth()->id()) // Descomenta si las cajas son individuales por usuario
+                           ->latest()
+                           ->first();
+
+        if ($cajaAbierta) {
+            // Si la caja sigue abierta (incluso desde ayer), usará la fecha de apertura
+            $fecha = $cajaAbierta->created_at->format('Y-m-d');
+        } else {
+            // Si la caja está cerrada, por defecto muestra el día de hoy
+            $fecha = now()->format('Y-m-d');
+        }
     }
+
+    // 2. Consultar únicamente las ventas de la fecha seleccionada
+    $ventas = Venta::with(['cliente', 'user'])
+        ->whereDate('created_at', $fecha)
+        ->orderBy('id', 'desc')
+        ->get();
+
+    // 3. (Opcional) Calcular el total vendido en esa fecha (excluyendo anuladas)
+    $totalDia = $ventas->where('estado', '!=', 'anulada')->sum('total');
+
+    // 4. Enviar los datos a la vista
+    return view('ventas.index', compact('ventas', 'fecha', 'totalDia'));
+}
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
