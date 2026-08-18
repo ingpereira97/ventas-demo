@@ -267,7 +267,7 @@
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
-        font-family: 'Courier New', Courier, monospace !important;
+        ont-family: Consolas, 'Lucida Console', Monaco, monospace !important;
         font-size: 12px !important;    /* Tamaño legible para agujas de matriz */
         line-height: 1.2 !important;
         color: #000 !important;
@@ -278,7 +278,7 @@
         width: 100% !important;
         border-collapse: collapse !important;
         table-layout: fixed !important;
-        font-size: 10px !important;
+        font-size: 12px !important;
     }
 
     .ticket table th,
@@ -322,7 +322,7 @@
 
     /* Textos y títulos */
     .ticket h3 {
-        font-size: 13px !important;
+        font-size: 15px !important;
         font-weight: bold !important;
         margin: 2px 0 !important;
         text-align: center;
@@ -331,7 +331,7 @@
     .ticket p, 
     .ticket div, 
     .ticket span {
-        font-size: 12px !important;
+        font-size: 15px !important;
         margin: 1px 0 !important;
     }
 

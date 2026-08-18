@@ -125,7 +125,8 @@
                                     </a>
 
                                     <button class="btn btn-danger btn-sm btn-anular" 
-                                            data-id="{{ $venta->id }}" title="Anular">
+                                            onclick="anularVenta({{ $venta->id }})"
+                                            title="Anular">
                                         <i class="fas fa-times"></i>
                                     </button>
 
